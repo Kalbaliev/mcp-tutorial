@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+
+  mcpserver:
+    build:
+      context: ./mcpserver
+      dockerfile: Dockerfile
+      
+    container_name: mcpserver
+    ports:
+      - "8050:8050"
+    volumes:
+      - ./mcpserver:/app
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - mcpserver
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app        # Code changes are reflected in the container
+      - /app/node_modules      # Container node_modules to avoid conflicts
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    driver: bridge
